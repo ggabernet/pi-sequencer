@@ -2,18 +2,37 @@
 import RPi.GPIO as GPIO
 import time
 from picamera import PiCamera
+import os
+import random
 
-LedPin = 17 
+#GPIO mode BCM
+GPIO.setmode(GPIO.BCM)
+
+# PINS for ULN2003A stepper motor driver
+IN1 = 6
+IN2 = 13
+IN3 = 19
+IN4 = 26
+
+# PINS for LED
+LedPin = 17
+
+# PINS for botton
 BtnPin = 18
 
-Led_status = 1
+# Set camera as PiCamera
 camera = PiCamera()
 
 def setup():
-    GPIO.setmode(GPIO.BCM)       # Numbers GPIOs by BCM
-    GPIO.setup(LedPin, GPIO.OUT)   # Set LedPin's mode is output
-    GPIO.setup(BtnPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)    # Set BtnPin's mode is input, and pull up to high level(3.3V)
-    GPIO.output(LedPin, GPIO.HIGH) # Set LedPin high(+3.3V) to off led
+    # Set LedPin mode as output
+    GPIO.setup(LedPin, GPIO.OUT)
+    # Set BtnPin mode as input, and pull up to high level (3.3V)
+    GPIO.setup(BtnPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    # Set LED status to 1
+    Led_status = 1
+    # Set LedPin high(3.3V) to off LED
+    GPIO.output(LedPin, GPIO.HIGH) 
+    # Start camera preview
     camera.start_preview()
 
 def swLed(ev=None):
