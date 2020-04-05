@@ -5,62 +5,102 @@ from picamera import PiCamera
 import os
 import random
 
+
 class Sequencing:
-    """Defines steps for sequencing"""
+    """Sequencing lego tiles."""
 
     def __init__(self, motor_in1=6, motor_in2=13, motor_in3=19, motor_in4=26, led_pin=17, button_pin=18):
         """
+        Initializes sequencing class. Sequencer device comprises a camera, a white LED to provide light to the camera,
+        a button to control the start of the sequencing process and a step motor (28BYJ-48, with driver ULN2003AN)
+        to move the LEGO tiles in front of the camera.
+        :param motor_in1: GPIO pin used as input for the stepper motor IN1.
+        :param motor_in2: GPIO pin used as input for the stepper motor IN2.
+        :param motor_in3: GPIO pin used as input for the stepper motor IN3.
+        :param motor_in4: GPIO pin used as input for the stepper motor IN4.
+        :param led_pin: GPIO pin used as output for lighting the LED.
+        :param button_pin: GPIO pin used as input for the button.
         """
         # Set GPIO mode
         GPIO.setmode(GPIO.BCM)
+
+        # Set GPIO pins
         self.in1_pin = motor_in1
         self.in2_pin = motor_in2
         self.in3_pin = motor_in3
         self.in4_pin = motor_in4
         self.led_pin = led_pin
         self.button_pin = button_pin
+
         # Set LED status to 1
         self.led_status = 1
+
         # Set camera as PiCamera
         self.camera = PiCamera()
-    
-    def setup(self):
+
         # Set LedPin mode as output
-        GPIO.setup(LedPin, GPIO.OUT)
+        GPIO.setup(self.led_pin, GPIO.OUT)
+
         # Set BtnPin mode as input, and pull up to high level (3.3V)
-        GPIO.setup(BtnPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
         # Set LedPin high(3.3V) to off LED
-        GPIO.output(LedPin, GPIO.HIGH) 
+        GPIO.output(self.led_pin, GPIO.HIGH)
+
+        # Set motor pins as output
+        GPIO.setup(self.in1_pin, GPIO.OUT)
+        GPIO.setup(self.in2_pin, GPIO.OUT)
+        GPIO.setup(self.in3_pin, GPIO.OUT)
+        GPIO.setup(self.in4_pin, GPIO.OUT)
+
+        # Set motor to off at the beginning
+        GPIO.output(self.in1_pin, False)
+        GPIO.output(self.in2_pin, False)
+        GPIO.output(self.in3_pin, False)
+        GPIO.output(self.in4_pin, False)
+
         # Start camera preview
-        camera.start_preview()
+        self.camera.start_preview()
 
-    def swLed(self, ev=None):
-        global Led_status
-        Led_status = not Led_status
+    def start_sequencing(self, ev=None):
+        self.led_status = not self.led_status
         # switch led status(on-->off; off-->on)
-        GPIO.output(LedPin, Led_status)
-        if Led_status == 1:
-            print ("starting recording")
-            camera.stop_recording()
+        GPIO.output(self.led_pin, self.led_status)
+        if self.led_status == 1:
+            print ("stopping sequencing")
+            self.camera.stop_recording()
         else:
-            print ("stopping recording")
-            camera.start_recording('/home/pi/Desktop/video.h264')
+            print ("starting sequencing")
+            self.camera.start_recording('/home/pi/Desktop/video.h264')
 
-    def loop(self):
-        # wait for falling and set bouncetime to prevent calling the function multiple times when the button is pressed
-        GPIO.add_event_detect(BtnPin, GPIO.FALLING, callback=swLed, bouncetime=200)
+    def detect_button(self, time_sleep=1, bouncetime=200):
+        """
+        Detect pressing the button. Also wait for falling of the button and setting bouncetime to prevent the calling
+        the function multiple times when the button is pressed.
+        :param time_sleep: Time sleep for which to wait for bouncetime.
+        :param bouncetime: Time set as bouncetime.
+        :return:
+        """
+        GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.start_sequencing, bouncetime=bouncetime)
         while True:
-            time.sleep(1)   # Don't do anything
+            time.sleep(time_sleep)   # Don't do anything
 
-    def destroy():
-        GPIO.output(LedPin, GPIO.HIGH)     # led off
-        GPIO.cleanup()                     # Release resource
-        camera.stop_preview()
+    def reset(self):
+        """
+        If program is stopped, GPIO outputs need to be set properly again. Turn led off.
+        :return:
+        """
+        # Turn led off
+        GPIO.output(self.led_pin, GPIO.HIGH)
+        # Release GPIOs
+        GPIO.cleanup()
+        # Stop camera preview
+        self.camera.stop_preview()
 
 if __name__ == '__main__':     # Program start from here
-    setup()
+    seq = Sequencing()
     try:
-        loop()
+        seq.detect_button()
     except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
-        destroy()
+        seq.reset()
 
