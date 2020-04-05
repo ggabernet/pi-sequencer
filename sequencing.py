@@ -9,7 +9,8 @@ import random
 class Sequencing:
     """Sequencing lego tiles."""
 
-    def __init__(self, motor_in1=6, motor_in2=13, motor_in3=19, motor_in4=26, led_pin=17, button_pin=18, step_time=0.001):
+    def __init__(self, motor_in1=6, motor_in2=13, motor_in3=19, motor_in4=26,
+                 led_pin=17, button_pin=18, step_time=0.001):
         """
         Initializes sequencing class. Sequencer device comprises a camera, a white LED to provide light to the camera,
         a button to control the start of the sequencing process and a step motor (28BYJ-48, with driver ULN2003AN)
@@ -44,24 +45,18 @@ class Sequencing:
 
         # Set LedPin mode as output
         GPIO.setup(self.led_pin, GPIO.OUT)
+        # Set LedPin high(3.3V) to off LED
+        GPIO.output(self.led_pin, GPIO.HIGH)
 
         # Set BtnPin mode as input, and pull up to high level (3.3V)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        # Set LedPin high(3.3V) to off LED
-        GPIO.output(self.led_pin, GPIO.HIGH)
-
         # Set motor pins as output
-        GPIO.setup(self.in1_pin, GPIO.OUT)
-        GPIO.setup(self.in2_pin, GPIO.OUT)
-        GPIO.setup(self.in3_pin, GPIO.OUT)
-        GPIO.setup(self.in4_pin, GPIO.OUT)
+        motor_pins = [self.in1_pin, self.in2_pin, self.in3_pin, self.in4_pin]
+        GPIO.setup(motor_pins, GPIO.OUT)
 
         # Set motor to off at the beginning
-        GPIO.output(self.in1_pin, False)
-        GPIO.output(self.in2_pin, False)
-        GPIO.output(self.in3_pin, False)
-        GPIO.output(self.in4_pin, False)
+        GPIO.output(motor_pins, False)
 
         # Start camera preview
         self.camera.start_preview()
@@ -142,7 +137,7 @@ class Sequencing:
         else:
             print ("starting sequencing")
             self.camera.start_recording('/home/pi/Desktop/video.h264')
-            self.motor_right(10)
+            self.motor_right(100)
 
     def detect_button(self, time_sleep=1, bouncetime=200):
         """
@@ -153,8 +148,9 @@ class Sequencing:
         :return:
         """
         GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.start_sequencing, bouncetime=bouncetime)
+        # Keep the program running forever unless we press ctrl+c
         while True:
-            time.sleep(time_sleep)   # Don't do anything
+            time.sleep(time_sleep)
 
     def reset(self):
         """
@@ -168,10 +164,10 @@ class Sequencing:
         # Stop camera preview
         self.camera.stop_preview()
 
-if __name__ == '__main__':     # Program start from here
+if __name__ == '__main__':
     seq = Sequencing()
     try:
         seq.detect_button()
-    except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
+    except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program reset() will be  executed.
         seq.reset()
 
