@@ -21,7 +21,8 @@ class Sequencing:
         :param motor_in4: GPIO pin used as input for the stepper motor IN4.
         :param led_pin: GPIO pin used as output for lighting the LED.
         :param button_pin: GPIO pin used as input for the button.
-        :param step_time: Step time to control the stepper motor speed.
+        :param step_time_left: Step time to control the stepper motor speed going left.
+        :param step_time_right: Step time to control the stepper motor speed going right.
         """
         # Set GPIO mode
         GPIO.setmode(GPIO.BCM)
