@@ -10,7 +10,7 @@ class Sequencing:
     """Sequencing lego tiles."""
 
     def __init__(self, motor_in1=6, motor_in2=13, motor_in3=19, motor_in4=26,
-                 led_pin=17, button_pin=18, step_time=0.001):
+                 led_pin=17, button_pin=18, step_time_left=0.001, step_time_right=0.0001):
         """
         Initializes sequencing class. Sequencer device comprises a camera, a white LED to provide light to the camera,
         a button to control the start of the sequencing process and a step motor (28BYJ-48, with driver ULN2003AN)
@@ -34,14 +34,13 @@ class Sequencing:
         self.led_pin = led_pin
         self.button_pin = button_pin
 
-        # Set LED status to 1
-        self.led_status = 1
 
         # Set camera as PiCamera
         self.camera = PiCamera()
 
         # Set motor step time to control speed
-        self.step_time = step_time
+        self.step_time_left = step_time_left
+        self.step_time_right = step_time_right
 
         # Set LedPin mode as output
         GPIO.setup(self.led_pin, GPIO.OUT)
@@ -59,53 +58,53 @@ class Sequencing:
         GPIO.output(motor_pins, False)
 
         # Start camera preview
-        self.camera.start_preview()
+        self.camera.start_preview(fullscreen=False, window=(100, 20, 640, 480))
 
-    def motor_step1(self):
+    def motor_step1(self, step_time):
         GPIO.output(self.in4_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in4_pin, False)
 
-    def motor_step2(self):
+    def motor_step2(self, step_time):
         GPIO.output(self.in4_pin, True)
         GPIO.output(self.in3_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in4_pin, False)
         GPIO.output(self.in3_pin, False)
 
-    def motor_step3(self):
+    def motor_step3(self, step_time):
         GPIO.output(self.in3_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in3_pin, False)
 
-    def motor_step4(self):
+    def motor_step4(self, step_time):
         GPIO.output(self.in2_pin, True)
         GPIO.output(self.in3_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in2_pin, False)
         GPIO.output(self.in3_pin, False)
 
-    def motor_step5(self):
+    def motor_step5(self,step_time):
         GPIO.output(self.in2_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in2_pin, False)
 
-    def motor_step6(self):
+    def motor_step6(self, step_time):
         GPIO.output(self.in1_pin, True)
         GPIO.output(self.in2_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in1_pin, False)
         GPIO.output(self.in2_pin, False)
 
-    def motor_step7(self):
+    def motor_step7(self, step_time):
         GPIO.output(self.in1_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in1_pin, False)
 
-    def motor_step8(self):
+    def motor_step8(self, step_time):
         GPIO.output(self.in4_pin, True)
         GPIO.output(self.in1_pin, True)
-        time.sleep(self.step_time)
+        time.sleep(step_time)
         GPIO.output(self.in4_pin, False)
         GPIO.output(self.in1_pin, False)
 
@@ -117,27 +116,44 @@ class Sequencing:
         :return:
         """
         for i in range(step):
-            self.motor_step1()
-            self.motor_step2()
-            self.motor_step3()
-            self.motor_step4()
-            self.motor_step5()
-            self.motor_step6()
-            self.motor_step7()
-            self.motor_step8()
-            print("Step right")
+            print("step right ", i)
+            self.motor_step1(self.step_time_right)
+            self.motor_step2(self.step_time_right)
+            self.motor_step3(self.step_time_right)
+            self.motor_step4(self.step_time_right)
+            self.motor_step5(self.step_time_right)
+            self.motor_step6(self.step_time_right)
+            self.motor_step7(self.step_time_right)
+            self.motor_step8(self.step_time_right)
+
+    def motor_left(self, step):
+        for i in range(step):
+            print("step left ", i)
+            self.motor_step8(self.step_time_left)
+            self.motor_step7(self.step_time_left)
+            self.motor_step6(self.step_time_left)
+            self.motor_step5(self.step_time_left)
+            self.motor_step4(self.step_time_left)
+            self.motor_step3(self.step_time_left)
+            self.motor_step2(self.step_time_left)
+            self.motor_step1(self.step_time_left)
 
     def start_sequencing(self, ev=None):
-        self.led_status = not self.led_status
-        # switch led status(on-->off; off-->on)
-        GPIO.output(self.led_pin, self.led_status)
-        if self.led_status == 1:
-            print ("stopping sequencing")
-            self.camera.stop_recording()
-        else:
-            print ("starting sequencing")
-            self.camera.start_recording('/home/pi/Desktop/video.h264')
-            self.motor_right(100)
+        print("Starting: ")
+        self.motor_right(3000)
+        time.sleep(2)
+        self.motor_left(200)
+        time.sleep(2)
+        print("Light on")
+        GPIO.output(self.led_pin, 0)
+        time.sleep(1)
+        print("Starting sequencing")
+        self.camera.start_recording('/home/pi/Desktop/video.h264')
+        self.motor_left(2800)
+        print("stopping sequencing")
+        self.camera.stop_recording()
+        print("light off")
+        GPIO.output(self.led_pin, 1)
 
     def detect_button(self, time_sleep=1, bounce1time=200):
         """
