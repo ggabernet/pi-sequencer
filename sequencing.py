@@ -33,8 +33,6 @@ class Sequencing:
         self.led_pin = led_pin
         self.button_pin = button_pin
 
-        # Set LED status to 1
-        self.led_status = 1
 
         # Set camera as PiCamera
         self.camera = PiCamera()
@@ -64,7 +62,7 @@ class Sequencing:
         GPIO.output(self.in4_pin, False)
 
         # Start camera preview
-        self.camera.start_preview()
+        self.camera.start_preview(fullscreen=False, window=(100, 20, 640, 480))
 
     def motor_step1(self):
         GPIO.output(self.in4_pin, True)
@@ -122,6 +120,7 @@ class Sequencing:
         :return:
         """
         for i in range(step):
+            print("step right ",i)
             self.motor_step1()
             self.motor_step2()
             self.motor_step3()
@@ -130,19 +129,35 @@ class Sequencing:
             self.motor_step6()
             self.motor_step7()
             self.motor_step8()
-            print("Step right")
+
+    def motor_left(self, step):
+        for i in range(step):
+            print("step left ", i)
+            self.motor_step8()
+            self.motor_step7()
+            self.motor_step6()
+            self.motor_step5()
+            self.motor_step4()
+            self.motor_step3()
+            self.motor_step2()
+            self.motor_step1()
 
     def start_sequencing(self, ev=None):
-        self.led_status = not self.led_status
-        # switch led status(on-->off; off-->on)
-        GPIO.output(self.led_pin, self.led_status)
-        if self.led_status == 1:
-            print ("stopping sequencing")
-            self.camera.stop_recording()
-        else:
-            print ("starting sequencing")
-            self.camera.start_recording('/home/pi/Desktop/video.h264')
-            self.motor_right(10)
+        print("Starting: ")
+        self.motor_right(3000)
+        time.sleep(2)
+        self.motor_left(200)
+        time.sleep(2)
+        print("Light on")
+        GPIO.output(self.led_pin, 0)
+        time.sleep(1)
+        print("Starting sequencing")
+        self.camera.start_recording('/home/pi/Desktop/video.h264')
+        self.motor_left(2800)
+        print("stopping sequencing")
+        self.camera.stop_recording()
+        print("light off")
+        GPIO.output(self.led_pin, 1)
 
     def detect_button(self, time_sleep=1, bouncetime=200):
         """
