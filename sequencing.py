@@ -139,7 +139,7 @@ class Sequencing:
             self.camera.start_recording('/home/pi/Desktop/video.h264')
             self.motor_right(100)
 
-    def detect_button(self, time_sleep=1, bouncetime=200):
+    def detect_button(self, time_sleep=1, bounce1time=200):
         """
         Detect pressing the button. Also wait for falling of the button and setting bouncetime to prevent the calling
         the function multiple times when the button is pressed.
