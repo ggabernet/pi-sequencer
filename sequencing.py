@@ -10,7 +10,7 @@ class Sequencing:
     """Sequencing lego tiles."""
 
     def __init__(self, motor_in1=6, motor_in2=13, motor_in3=19, motor_in4=26,
-                 led_pin=17, button_pin=18, step_time_left=0.001, step_time_right=0.0001):
+                 led_pin=17, button_pin=18, step_time_left=0.003, step_time_right=0.0008):
         """
         Initializes sequencing class. Sequencer device comprises a camera, a white LED to provide light to the camera,
         a button to control the start of the sequencing process and a step motor (28BYJ-48, with driver ULN2003AN)
@@ -156,7 +156,7 @@ class Sequencing:
         print("light off")
         GPIO.output(self.led_pin, 1)
 
-    def detect_button(self, time_sleep=1, bounce1time=200):
+    def detect_button(self, time_sleep=1, bouncetime=200):
         """
         Detect pressing the button. Also wait for falling of the button and setting bouncetime to prevent the calling
         the function multiple times when the button is pressed.
